@@ -53,6 +53,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/customers/**")
                                 .hasAnyRole("MANAGER", "DISPATCHER")
                         .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/sites/**")
+                                .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
+                        .requestMatchers(HttpMethod.POST, "/api/sites/**")
+                                .hasAnyRole("MANAGER", "DISPATCHER")
+                        .requestMatchers(HttpMethod.PUT, "/api/sites/**")
+                                .hasAnyRole("MANAGER", "DISPATCHER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/sites/**").hasRole("MANAGER")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
