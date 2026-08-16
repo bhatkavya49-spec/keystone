@@ -1,75 +1,44 @@
-import { useState } from "react";
-
-const API_URL = "http://localhost:8080";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import "./App.css";
+import AuthProvider from "./auth/AuthProvider";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import AppLayout from "./components/layout/AppLayout";
+import LoginPage from "./pages/LoginPage";
+import DashboardPage from "./pages/DashboardPage";
+import CustomersPage from "./pages/CustomersPage";
+import SitesPage from "./pages/SitesPage";
+import WorkOrdersPage from "./pages/work-orders/WorkOrdersPage";
+import PartsPage from "./pages/PartsPage";
+import TimeTrackingPage from "./pages/TimeTrackingPage";
+import SlaPage from "./pages/SlaPage";
+import NotificationsPage from "./pages/NotificationsPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setMessage("Logging in...");
-
-    try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("role", data.role);
-
-        setMessage(`Login successful! Welcome ${data.username}`);
-      } else {
-        setMessage(data.message || "Login failed");
-      }
-    } catch (error) {
-      setMessage("Cannot connect to backend.");
-    }
-  };
-
   return (
-    <div className="app">
-      <div className="login-card">
-        <h1>Keystone</h1>
-        <p className="subtitle">Management System</p>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
 
-        <form onSubmit={handleLogin}>
-          <label>Username</label>
-          <input
-            type="text"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/sites" element={<SitesPage />} />
+              <Route path="/work-orders" element={<WorkOrdersPage />} />
+              <Route path="/parts" element={<PartsPage />} />
+              <Route path="/time-tracking" element={<TimeTrackingPage />} />
+              <Route path="/sla" element={<SlaPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+            </Route>
+          </Route>
 
-          <label>Password</label>
-          <input
-            type="password"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-
-          <button type="submit">Login</button>
-        </form>
-
-        {message && <p className="message">{message}</p>}
-      </div>
-    </div>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
