@@ -63,6 +63,11 @@ public class WorkOrder {
 
     private LocalDateTime completedAt;
 
+    private LocalDateTime slaDueAt;
+
+    @Enumerated(EnumType.STRING)
+    private SlaStatus slaStatus;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -150,5 +155,21 @@ public class WorkOrder {
 
     public void setCompletedAt(LocalDateTime completedAt) {
         this.completedAt = completedAt;
+    }
+
+    public LocalDateTime getSlaDueAt() {
+        return slaDueAt;
+    }
+
+    public void setSlaDueAt(LocalDateTime slaDueAt) {
+        this.slaDueAt = slaDueAt;
+    }
+
+    public SlaStatus getSlaStatus() {
+        return slaStatus;
+    }
+
+    public void setSlaStatus(SlaStatus slaStatus) {
+        this.slaStatus = slaStatus;
     }
 }

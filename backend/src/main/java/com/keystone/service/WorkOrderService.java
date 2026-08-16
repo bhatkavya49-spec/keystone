@@ -1,6 +1,7 @@
 package com.keystone.service;
 
 import com.keystone.entity.Customer;
+import com.keystone.entity.NotificationType;
 import com.keystone.entity.Role;
 import com.keystone.entity.Site;
 import com.keystone.entity.User;
@@ -25,15 +26,18 @@ public class WorkOrderService {
     private final CustomerRepository customerRepository;
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     public WorkOrderService(WorkOrderRepository workOrderRepository,
                             CustomerRepository customerRepository,
                             SiteRepository siteRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            NotificationService notificationService) {
         this.workOrderRepository = workOrderRepository;
         this.customerRepository = customerRepository;
         this.siteRepository = siteRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -109,7 +113,11 @@ public class WorkOrderService {
         }
         workOrder.setAssignedTechnician(technician);
         workOrder.setStatus(WorkOrderStatus.ASSIGNED);
-        return workOrderRepository.save(workOrder);
+        WorkOrder saved = workOrderRepository.save(workOrder);
+        notificationService.createNotification(technician,
+                "Work order #" + saved.getId() + " has been assigned to you",
+                NotificationType.WORK_ORDER_ASSIGNED);
+        return saved;
     }
 
     @Transactional
