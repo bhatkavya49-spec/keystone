@@ -75,8 +75,10 @@ public class WorkOrderController {
 
     @PatchMapping("/{id}/assign")
     public ResponseEntity<WorkOrder> assignWorkOrder(@PathVariable("id") Long id,
-                                                     @Valid @RequestBody AssignWorkOrderRequest request) {
-        return ResponseEntity.ok(workOrderService.assignWorkOrder(id, request.getTechnicianId()));
+                                                     @Valid @RequestBody AssignWorkOrderRequest request,
+                                                     @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(workOrderService.assignWorkOrder(
+                id, request.getTechnicianId(), principal.getUsername()));
     }
 
     @PatchMapping("/{id}/start")

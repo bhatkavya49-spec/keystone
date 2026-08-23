@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { useFetch } from "../../api/useFetch";
 import { apiFetch } from "../../api/client";
@@ -6,6 +6,7 @@ import {
   canAssignWorkOrders,
   canCreateWorkOrders,
   canDeleteWorkOrders,
+  filterAccessibleWorkOrders,
 } from "../../utils/permissions";
 import { computeSlaStatus } from "../../utils/sla";
 import { formatDateTime } from "../../utils/format";
@@ -39,6 +40,26 @@ export default function WorkOrdersPage() {
   const [deleting, setDeleting] = useState(null);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!viewing) {
+      setHistory([]);
+      return undefined;
+    }
+    setHistory([]);
+    apiFetch(`/api/work-orders/${viewing.id}/history`)
+      .then((entries) => {
+        if (!cancelled) setHistory(entries || []);
+      })
+      .catch(() => {
+        if (!cancelled) setHistory([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewing]);
 
   const isTechnician = role === "TECHNICIAN";
   const canCreate = canCreateWorkOrders(role);
@@ -47,10 +68,15 @@ export default function WorkOrdersPage() {
 
   const isOwn = (wo) => wo.assignedTechnician?.username === user?.username;
 
+  const accessibleWorkOrders = useMemo(
+    () => filterAccessibleWorkOrders(workOrders, role, user?.username),
+    [workOrders, role, user?.username],
+  );
+
   const filtered = useMemo(() => {
-    if (!workOrders) return [];
+    if (!accessibleWorkOrders) return [];
     const query = search.trim().toLowerCase();
-    return workOrders.filter((wo) => {
+    return accessibleWorkOrders.filter((wo) => {
       const matchesStatus = statusFilter === "ALL" || wo.status === statusFilter;
       const matchesSearch =
         !query ||
@@ -60,7 +86,7 @@ export default function WorkOrdersPage() {
         wo.assignedTechnician?.username?.toLowerCase().includes(query);
       return matchesStatus && matchesSearch;
     });
-  }, [workOrders, search, statusFilter]);
+  }, [accessibleWorkOrders, search, statusFilter]);
 
   const handleSave = async (payload) => {
     setBusy(true);
@@ -179,7 +205,7 @@ export default function WorkOrdersPage() {
               <button
                 type="button"
                 className="btn-icon"
-                title="Start work order"
+                title="Start work"
                 onClick={() => handleStart(row)}
               >
                 <Icon name="play" size={16} />
@@ -189,7 +215,7 @@ export default function WorkOrdersPage() {
               <button
                 type="button"
                 className="btn-icon btn-icon--success"
-                title="Complete work order"
+                title="Complete work"
                 onClick={() => handleComplete(row)}
               >
                 <Icon name="check" size={16} />
@@ -234,7 +260,11 @@ export default function WorkOrdersPage() {
     <div className="page">
       <PageHeader
         title="Work Orders"
-        subtitle="Create, assign and track service work orders."
+        subtitle={
+          isTechnician
+            ? "View and work on the work orders assigned to you."
+            : "Create, assign and track service work orders."
+        }
         action={
           canCreate ? (
             <button
@@ -284,7 +314,13 @@ export default function WorkOrdersPage() {
         rows={filtered}
         loading={loading}
         onRowClick={(row) => setViewing(row)}
-        emptyMessage={search || statusFilter !== "ALL" ? "No work orders match your filters." : "No work orders yet. Create your first work order."}
+        emptyMessage={
+          search || statusFilter !== "ALL"
+            ? "No work orders match your filters."
+            : isTechnician
+              ? "You have no assigned work orders yet."
+              : "No work orders yet. Create your first work order."
+        }
       />
 
       {formOpen && (
@@ -314,11 +350,14 @@ export default function WorkOrdersPage() {
       <WorkOrderDetailModal
         open={Boolean(viewing)}
         workOrder={viewing}
+        history={history}
         canEdit={canCreate}
         canAssign={canAssign}
         canStart={viewingActions.canStart}
         canComplete={viewingActions.canComplete}
         canDelete={canDelete}
+        canOpenParts={isTechnician}
+        canOpenTime={isTechnician}
         busy={busy}
         onEdit={() => {
           setEditing(viewing);

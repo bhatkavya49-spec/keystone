@@ -45,7 +45,7 @@ export const NAV_ITEMS = [
     label: "Notifications",
     path: "/notifications",
     icon: "notifications",
-    roles: ["MANAGER", "DISPATCHER", "TECHNICIAN"],
+    roles: ["MANAGER", "DISPATCHER", "TECHNICIAN", "CUSTOMER"],
   },
 ];
 

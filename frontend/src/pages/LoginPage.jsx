@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
+import Notice from "../components/ui/Notice";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
@@ -17,6 +18,7 @@ export default function LoginPage() {
   }
 
   const from = location.state?.from?.pathname || "/dashboard";
+  const justRegistered = location.state?.registered;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -43,6 +45,14 @@ export default function LoginPage() {
             <p className="login-card__subtitle">Service Management System</p>
           </div>
         </div>
+
+        {justRegistered && (
+          <div className="login-card__notice">
+            <Notice kind="success">
+              Account created for {justRegistered}. You can now sign in.
+            </Notice>
+          </div>
+        )}
 
         {error && <div className="form-error">{error}</div>}
 
@@ -83,6 +93,13 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+
+        <div className="login-card__footer">
+          <span>Don't have an account?</span>{" "}
+          <Link className="link" to="/register">
+            Create account
+          </Link>
+        </div>
       </div>
     </div>
   );

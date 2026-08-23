@@ -4,24 +4,34 @@ export default function Badge({ tone = "neutral", children }) {
   return <span className={`badge badge--${tone}`}>{children}</span>;
 }
 
-export function StatusBadge({ status }) {
+export function StatusBadge({ status, dot = false }) {
   const tones = {
     NEW: "neutral",
     ASSIGNED: "info",
     IN_PROGRESS: "warning",
     COMPLETED: "success",
   };
-  return <Badge tone={tones[status] || "neutral"}>{status}</Badge>;
+  return (
+    <Badge tone={tones[status] || "neutral"}>
+      {dot && <span className="badge__dot" />}
+      {status}
+    </Badge>
+  );
 }
 
-export function PriorityBadge({ priority }) {
+export function PriorityBadge({ priority, dot = false }) {
   const tones = {
     LOW: "neutral",
     MEDIUM: "info",
     HIGH: "warning",
     URGENT: "danger",
   };
-  return <Badge tone={tones[priority] || "neutral"}>{priority}</Badge>;
+  return (
+    <Badge tone={tones[priority] || "neutral"}>
+      {dot && <span className="badge__dot" />}
+      {priority}
+    </Badge>
+  );
 }
 
 export function SlaBadge({ status }) {
@@ -37,6 +47,7 @@ export function SlaBadge({ status }) {
 export function NotificationBadge({ type }) {
   const tones = {
     WORK_ORDER_ASSIGNED: "info",
+    WORK_ORDER_STATUS_CHANGED: "info",
     SLA_AT_RISK: "warning",
     SLA_BREACHED: "danger",
   };

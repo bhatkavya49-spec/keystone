@@ -4,12 +4,14 @@ import com.keystone.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -40,11 +42,14 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider)
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/customers/**")
                                 .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
@@ -53,6 +58,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/customers/**")
                                 .hasAnyRole("MANAGER", "DISPATCHER")
                         .requestMatchers(HttpMethod.DELETE, "/api/customers/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/sites/customer/*")
+                                .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/sites/**")
                                 .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
                         .requestMatchers(HttpMethod.POST, "/api/sites/**")
@@ -82,10 +89,14 @@ public class SecurityConfig {
                                 .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
                         .requestMatchers(HttpMethod.PATCH, "/api/work-orders/*/sla")
                                 .hasAnyRole("MANAGER", "DISPATCHER")
+                        .requestMatchers(HttpMethod.GET, "/api/work-orders/customer/*")
+                                .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN", "CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/work-orders")
+                                .hasAnyRole("MANAGER", "DISPATCHER", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/notifications/**")
-                                .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
+                                .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN", "CUSTOMER")
                         .requestMatchers(HttpMethod.PATCH, "/api/notifications/*/read")
-                                .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
+                                .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN", "CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/work-orders/**")
                                 .hasAnyRole("MANAGER", "DISPATCHER", "TECHNICIAN")
                         .requestMatchers(HttpMethod.POST, "/api/work-orders/**")
@@ -108,7 +119,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+                "http://localhost:5174",
+                "http://127.0.0.1:5174"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

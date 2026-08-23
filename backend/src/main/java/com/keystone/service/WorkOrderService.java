@@ -7,10 +7,12 @@ import com.keystone.entity.Site;
 import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
 import com.keystone.entity.WorkOrderStatus;
+import com.keystone.entity.WorkOrderStatusHistory;
 import com.keystone.repository.CustomerRepository;
 import com.keystone.repository.SiteRepository;
 import com.keystone.repository.UserRepository;
 import com.keystone.repository.WorkOrderRepository;
+import com.keystone.repository.WorkOrderStatusHistoryRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,17 +29,20 @@ public class WorkOrderService {
     private final SiteRepository siteRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final WorkOrderStatusHistoryRepository statusHistoryRepository;
 
     public WorkOrderService(WorkOrderRepository workOrderRepository,
                             CustomerRepository customerRepository,
                             SiteRepository siteRepository,
                             UserRepository userRepository,
-                            NotificationService notificationService) {
+                            NotificationService notificationService,
+                            WorkOrderStatusHistoryRepository statusHistoryRepository) {
         this.workOrderRepository = workOrderRepository;
         this.customerRepository = customerRepository;
         this.siteRepository = siteRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.statusHistoryRepository = statusHistoryRepository;
     }
 
     @Transactional
@@ -98,7 +103,8 @@ public class WorkOrderService {
     }
 
     @Transactional
-    public WorkOrder assignWorkOrder(Long id, Long technicianId) {
+    public WorkOrder assignWorkOrder(Long id, Long technicianId, String currentUsername) {
+        requireNotTechnician(currentUsername);
         WorkOrder workOrder = getWorkOrderById(id);
         if (workOrder.getStatus() == WorkOrderStatus.COMPLETED) {
             throw new ResponseStatusException(
@@ -111,12 +117,27 @@ public class WorkOrderService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "User is not a technician: " + technician.getUsername());
         }
+        boolean wasAlreadyAssigned = workOrder.getAssignedTechnician() != null
+                && workOrder.getAssignedTechnician().getUsername().equals(technician.getUsername());
+        WorkOrderStatus previousStatus = workOrder.getStatus();
         workOrder.setAssignedTechnician(technician);
         workOrder.setStatus(WorkOrderStatus.ASSIGNED);
         WorkOrder saved = workOrderRepository.save(workOrder);
+        if (saved.getStatus() != previousStatus) {
+            recordStatusHistory(saved, previousStatus, saved.getStatus(),
+                    currentUsername, "Assigned to " + technician.getUsername());
+        }
         notificationService.createNotification(technician,
                 "Work order #" + saved.getId() + " has been assigned to you",
                 NotificationType.WORK_ORDER_ASSIGNED);
+        if (!wasAlreadyAssigned && workOrder.getCustomer() != null && workOrder.getCustomer().getEmail() != null) {
+            userRepository.findByEmail(workOrder.getCustomer().getEmail())
+                    .ifPresent(customerUser -> {
+                        notificationService.createNotification(customerUser,
+                                "Work order #" + saved.getId() + " has been assigned to a technician",
+                                NotificationType.WORK_ORDER_ASSIGNED);
+                    });
+        }
         return saved;
     }
 
@@ -195,5 +216,26 @@ public class WorkOrderService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "User not found with id: " + userId));
+    }
+
+    private void requireNotTechnician(String currentUsername) {
+        userRepository.findByUsername(currentUsername)
+                .filter(user -> user.getRole() == Role.TECHNICIAN)
+                .ifPresent(user -> {
+                    throw new ResponseStatusException(
+                            HttpStatus.FORBIDDEN, "Technicians cannot assign work orders");
+                });
+    }
+
+    private void recordStatusHistory(WorkOrder workOrder, WorkOrderStatus from,
+                                     WorkOrderStatus to, String changedBy, String note) {
+        WorkOrderStatusHistory history = new WorkOrderStatusHistory();
+        history.setWorkOrder(workOrder);
+        history.setFromStatus(from);
+        history.setToStatus(to);
+        history.setChangedBy(changedBy);
+        history.setChangedAt(LocalDateTime.now());
+        history.setNote(note);
+        statusHistoryRepository.save(history);
     }
 }

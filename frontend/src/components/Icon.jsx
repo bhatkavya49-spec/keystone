@@ -165,6 +165,17 @@ const ICON_PATHS = {
       <line x1="3" y1="10" x2="21" y2="10" />
     </>
   ),
+  chevronRight: (
+    <>
+      <polyline points="9 18 15 12 9 6" />
+    </>
+  ),
+  checkCircle: (
+    <>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </>
+  ),
 };
 
 export default function Icon({ name, size = 20 }) {

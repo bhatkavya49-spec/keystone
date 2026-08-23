@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { useFetch } from "../api/useFetch";
 import { apiFetch } from "../api/client";
@@ -126,17 +127,26 @@ export default function TimeTrackingPage() {
   const { data: workOrders, error: workOrdersError, reload: reloadWorkOrders } =
     useFetch("/api/work-orders");
 
-  const [selectedId, setSelectedId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedId, setSelectedId] = useState(() => {
+    const fromQuery = searchParams.get("wo");
+    return fromQuery ? Number(fromQuery) : null;
+  });
   const accessibleWorkOrders = useMemo(
     () => filterAccessibleWorkOrders(workOrders, role, user?.username),
     [workOrders, role, user?.username],
   );
 
+  const handleSelect = (id) => {
+    setSelectedId(id);
+    setSearchParams(id ? { wo: String(id) } : {}, { replace: true });
+  };
+
   const selectedWorkOrder = accessibleWorkOrders.find((wo) => wo.id === selectedId) || null;
 
   const entriesQuery = useFetch(
-    selectedId ? `/api/work-orders/${selectedId}/time-entries` : null,
-    { enabled: Boolean(selectedId) },
+    selectedWorkOrder ? `/api/work-orders/${selectedWorkOrder.id}/time-entries` : null,
+    { enabled: Boolean(selectedWorkOrder) },
   );
 
   const [formOpen, setFormOpen] = useState(false);
@@ -275,7 +285,7 @@ export default function TimeTrackingPage() {
         <WorkOrderSelector
           workOrders={accessibleWorkOrders}
           selectedId={selectedId}
-          onSelect={setSelectedId}
+          onSelect={handleSelect}
         />
       </div>
 
