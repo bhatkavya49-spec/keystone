@@ -6,6 +6,7 @@ import com.keystone.entity.Role;
 import com.keystone.entity.Site;
 import com.keystone.entity.User;
 import com.keystone.entity.WorkOrder;
+import java.util.List;
 import com.keystone.entity.WorkOrderStatus;
 import com.keystone.entity.WorkOrderStatusHistory;
 import com.keystone.repository.CustomerRepository;
@@ -225,6 +226,11 @@ public class WorkOrderService {
                     throw new ResponseStatusException(
                             HttpStatus.FORBIDDEN, "Technicians cannot assign work orders");
                 });
+    }
+
+    @Transactional(readOnly = true)
+    public List<User> getTechnicians() {
+        return userRepository.findAllByRole(Role.TECHNICIAN);
     }
 
     private void recordStatusHistory(WorkOrder workOrder, WorkOrderStatus from,
