@@ -139,6 +139,12 @@ public class WorkOrderService {
                                 NotificationType.WORK_ORDER_ASSIGNED);
                     });
         }
+        List<User> managers = userRepository.findAllByRole(Role.MANAGER);
+        for (User manager : managers) {
+            notificationService.createNotification(manager,
+                    "Work order #" + saved.getId() + " has been assigned to " + technician.getUsername(),
+                    NotificationType.WORK_ORDER_ASSIGNED);
+        }
         return saved;
     }
 
@@ -154,6 +160,12 @@ public class WorkOrderService {
                     HttpStatus.CONFLICT, "Work order must be ASSIGNED before it can be started");
         }
         requireAssignedTechnician(workOrder, currentUsername);
+        List<User> managers = userRepository.findAllByRole(Role.MANAGER);
+        for (User manager : managers) {
+            notificationService.createNotification(manager,
+                    "Work order #" + id + " has been started by " + currentUsername,
+                    NotificationType.WORK_ORDER_STATUS_CHANGED);
+        }
         workOrder.setStatus(WorkOrderStatus.IN_PROGRESS);
         return workOrderRepository.save(workOrder);
     }
@@ -170,6 +182,12 @@ public class WorkOrderService {
                     HttpStatus.CONFLICT, "Work order must be IN_PROGRESS before it can be completed");
         }
         requireAssignedTechnician(workOrder, currentUsername);
+        List<User> managers = userRepository.findAllByRole(Role.MANAGER);
+        for (User manager : managers) {
+            notificationService.createNotification(manager,
+                    "Work order #" + id + " has been completed by " + currentUsername,
+                    NotificationType.WORK_ORDER_STATUS_CHANGED);
+        }
         workOrder.setStatus(WorkOrderStatus.COMPLETED);
         workOrder.setCompletedAt(LocalDateTime.now());
         return workOrderRepository.save(workOrder);
