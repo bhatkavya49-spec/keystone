@@ -26,7 +26,7 @@ export function canDeleteSites(role) {
 }
 
 export function canCreateWorkOrders(role) {
-  return role === ROLES.MANAGER || role === ROLES.DISPATCHER;
+  return role === ROLES.MANAGER || role === ROLES.DISPATCHER || role === ROLES.CUSTOMER;
 }
 
 export function canAssignWorkOrders(role) {
@@ -54,8 +54,11 @@ export function canUseCustomerApis(role) {
 }
 
 export function filterAccessibleWorkOrders(workOrders, role, username) {
-  if (role !== ROLES.TECHNICIAN) {
-    return workOrders || [];
+  if (role === ROLES.TECHNICIAN) {
+    return (workOrders || []).filter((wo) => wo.assignedTechnician?.username === username);
   }
-  return (workOrders || []).filter((wo) => wo.assignedTechnician?.username === username);
+  if (role === ROLES.CUSTOMER) {
+    return (workOrders || []).filter((wo) => wo.customer?.email === username);
+  }
+  return workOrders || [];
 }

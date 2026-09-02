@@ -193,6 +193,50 @@ public class WorkOrderService {
         return workOrderRepository.save(workOrder);
     }
 
+    @Transactional
+    public WorkOrder holdWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = getWorkOrderById(id);
+        if (workOrder.getStatus() == WorkOrderStatus.COMPLETED) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Cannot hold a completed work order");
+        }
+        if (workOrder.getStatus() != WorkOrderStatus.IN_PROGRESS) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Work order must be IN_PROGRESS before it can be put on hold");
+        }
+        requireAssignedTechnician(workOrder, currentUsername);
+        List<User> managers = userRepository.findAllByRole(Role.MANAGER);
+        for (User manager : managers) {
+            notificationService.createNotification(manager,
+                    "Work order #" + id + " has been put on hold by " + currentUsername,
+                    NotificationType.WORK_ORDER_STATUS_CHANGED);
+        }
+        workOrder.setStatus(WorkOrderStatus.ON_HOLD);
+        return workOrderRepository.save(workOrder);
+    }
+
+    @Transactional
+    public WorkOrder resumeWorkOrder(Long id, String currentUsername) {
+        WorkOrder workOrder = getWorkOrderById(id);
+        if (workOrder.getStatus() == WorkOrderStatus.COMPLETED) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Cannot resume a completed work order");
+        }
+        if (workOrder.getStatus() != WorkOrderStatus.ON_HOLD) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Work order must be ON_HOLD before it can be resumed");
+        }
+        requireAssignedTechnician(workOrder, currentUsername);
+        List<User> managers = userRepository.findAllByRole(Role.MANAGER);
+        for (User manager : managers) {
+            notificationService.createNotification(manager,
+                    "Work order #" + id + " has been resumed by " + currentUsername,
+                    NotificationType.WORK_ORDER_STATUS_CHANGED);
+        }
+        workOrder.setStatus(WorkOrderStatus.IN_PROGRESS);
+        return workOrderRepository.save(workOrder);
+    }
+
     private void requireAssignedTechnician(WorkOrder workOrder, String currentUsername) {
         if (workOrder.getAssignedTechnician() == null
                 || !workOrder.getAssignedTechnician().getUsername().equals(currentUsername)) {

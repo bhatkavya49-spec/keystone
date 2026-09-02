@@ -21,6 +21,8 @@ export default function WorkOrderDetailModal({
   canEdit,
   canAssign,
   canStart,
+  canHold,
+  canResume,
   canComplete,
   canDelete,
   canOpenParts,
@@ -29,6 +31,8 @@ export default function WorkOrderDetailModal({
   onEdit,
   onAssign,
   onStart,
+  onHold,
+  onResume,
   onComplete,
   onDelete,
   onClose,
@@ -103,6 +107,18 @@ export default function WorkOrderDetailModal({
           <button type="button" className="btn-primary btn-primary--auto" onClick={onStart} disabled={busy}>
             <Icon name="play" size={16} />
             <span>Start Work</span>
+          </button>
+        )}
+        {canHold && (
+          <button type="button" className="btn-primary btn-primary--auto" onClick={onHold} disabled={busy}>
+            <Icon name="pause" size={16} />
+            <span>Hold Work</span>
+          </button>
+        )}
+        {canResume && (
+          <button type="button" className="btn-primary btn-primary--auto" onClick={onResume} disabled={busy}>
+            <Icon name="play" size={16} />
+            <span>Resume Work</span>
           </button>
         )}
         {canComplete && (

@@ -21,7 +21,7 @@ import WorkOrderFormModal from "./WorkOrderFormModal";
 import AssignWorkOrderModal from "./AssignWorkOrderModal";
 import WorkOrderDetailModal from "./WorkOrderDetailModal";
 
-const STATUS_FILTERS = ["ALL", "NEW", "ASSIGNED", "IN_PROGRESS", "COMPLETED"];
+const STATUS_FILTERS = ["ALL", "NEW", "ASSIGNED", "IN_PROGRESS", "ON_HOLD", "COMPLETED"];
 
 export default function WorkOrdersPage() {
   const { user } = useAuth();
@@ -128,7 +128,11 @@ export default function WorkOrdersPage() {
       await reload();
       setViewing((prev) => {
         if (!prev || prev.id !== workOrder.id) return prev;
-        const newStatus = action === "start" ? "IN_PROGRESS" : "COMPLETED";
+        let newStatus = prev.status;
+        if (action === "start") newStatus = "IN_PROGRESS";
+        else if (action === "hold") newStatus = "ON_HOLD";
+        else if (action === "resume") newStatus = "IN_PROGRESS";
+        else if (action === "complete") newStatus = "COMPLETED";
         return {
           ...prev,
           status: newStatus,
@@ -142,6 +146,8 @@ export default function WorkOrdersPage() {
   };
 
   const handleStart = (workOrder) => runAction(workOrder, "start", "Work order started");
+  const handleHold = (workOrder) => runAction(workOrder, "hold", "Work order put on hold");
+  const handleResume = (workOrder) => runAction(workOrder, "resume", "Work order resumed");
   const handleComplete = (workOrder) => runAction(workOrder, "complete", "Work order completed");
 
   const handleDelete = async () => {
@@ -159,6 +165,8 @@ export default function WorkOrdersPage() {
 
   const rowActionState = (wo) => ({
     canStart: isTechnician && isOwn(wo) && wo.status === "ASSIGNED",
+    canHold: isTechnician && isOwn(wo) && wo.status === "IN_PROGRESS",
+    canResume: isTechnician && isOwn(wo) && wo.status === "ON_HOLD",
     canComplete: isTechnician && isOwn(wo) && wo.status === "IN_PROGRESS",
   });
 
@@ -207,6 +215,26 @@ export default function WorkOrdersPage() {
                 className="btn-icon"
                 title="Start work"
                 onClick={() => handleStart(row)}
+              >
+                <Icon name="play" size={16} />
+              </button>
+            )}
+            {state.canHold && (
+              <button
+                type="button"
+                className="btn-icon"
+                title="Hold work"
+                onClick={() => handleHold(row)}
+              >
+                <Icon name="pause" size={16} />
+              </button>
+            )}
+            {state.canResume && (
+              <button
+                type="button"
+                className="btn-icon"
+                title="Resume work"
+                onClick={() => handleResume(row)}
               >
                 <Icon name="play" size={16} />
               </button>
@@ -354,6 +382,8 @@ export default function WorkOrdersPage() {
         canEdit={canCreate}
         canAssign={canAssign}
         canStart={viewingActions.canStart}
+        canHold={viewingActions.canHold}
+        canResume={viewingActions.canResume}
         canComplete={viewingActions.canComplete}
         canDelete={canDelete}
         canOpenParts={isTechnician}
@@ -369,6 +399,8 @@ export default function WorkOrdersPage() {
           setViewing(null);
         }}
         onStart={() => handleStart(viewing)}
+        onHold={() => handleHold(viewing)}
+        onResume={() => handleResume(viewing)}
         onComplete={() => handleComplete(viewing)}
         onDelete={() => {
           setDeleting(viewing);

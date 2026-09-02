@@ -21,7 +21,7 @@ export const NAV_ITEMS = [
     label: "Work Orders",
     path: "/work-orders",
     icon: "workOrders",
-    roles: ["MANAGER", "DISPATCHER", "TECHNICIAN"],
+    roles: ["MANAGER", "DISPATCHER", "TECHNICIAN", "CUSTOMER"],
   },
   {
     label: "Parts",

@@ -99,4 +99,16 @@ public class WorkOrderController {
                                                        @AuthenticationPrincipal UserDetails principal) {
         return ResponseEntity.ok(workOrderService.completeWorkOrder(id, principal.getUsername()));
     }
+
+    @PatchMapping("/{id}/hold")
+    public ResponseEntity<WorkOrder> holdWorkOrder(@PathVariable("id") Long id,
+                                                   @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(workOrderService.holdWorkOrder(id, principal.getUsername()));
+    }
+
+    @PatchMapping("/{id}/resume")
+    public ResponseEntity<WorkOrder> resumeWorkOrder(@PathVariable("id") Long id,
+                                                     @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(workOrderService.resumeWorkOrder(id, principal.getUsername()));
+    }
 }
