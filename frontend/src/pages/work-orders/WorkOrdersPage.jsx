@@ -27,7 +27,14 @@ export default function WorkOrdersPage() {
   const { user } = useAuth();
   const role = user?.role;
 
-  const { data: workOrders, loading, error, reload } = useFetch("/api/work-orders");
+  const me = useFetch("/api/auth/me");
+  const isCustomer = role === "CUSTOMER";
+  const customerId = me.data?.customerId;
+  const workOrdersPath = isCustomer && customerId
+    ? `/api/work-orders/customer/${customerId}`
+    : "/api/work-orders";
+
+  const { data: workOrders, loading, error, reload } = useFetch(workOrdersPath);
   const { data: customers } = useFetch("/api/customers");
   const { data: sites } = useFetch("/api/sites");
 

@@ -55,7 +55,16 @@ public class UserService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.CUSTOMER);
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        if (savedUser.getRole() == Role.CUSTOMER) {
+            Customer customer = new Customer();
+            customer.setName(savedUser.getUsername());
+            customer.setEmail(savedUser.getEmail());
+            customerRepository.save(customer);
+        }
+
+        return savedUser;
     }
 
     @Transactional(readOnly = true)
