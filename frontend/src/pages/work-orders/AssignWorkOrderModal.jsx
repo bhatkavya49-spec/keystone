@@ -9,11 +9,14 @@ export default function AssignWorkOrderModal({ open, workOrder, busy, onSubmit, 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-useEffect(() => {
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
     setLoading(true);
     setError("");
     setTechnicians([]);
-    apiFetch("/api/work-orders/technicians")
+    apiFetch("/api/auth/technicians")
       .then((data) => {
         setTechnicians(data);
       })
@@ -23,7 +26,7 @@ useEffect(() => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [open]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();

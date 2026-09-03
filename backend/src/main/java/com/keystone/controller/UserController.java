@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -48,5 +49,15 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<CurrentUserResponse> me(@AuthenticationPrincipal UserDetails principal) {
         return ResponseEntity.ok(userService.getCurrentUser(principal.getUsername()));
+    }
+
+    @GetMapping("/technicians")
+    public ResponseEntity<List<User>> technicians() {
+        return ResponseEntity.ok(userService.getTechnicians());
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<User>> users() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 }

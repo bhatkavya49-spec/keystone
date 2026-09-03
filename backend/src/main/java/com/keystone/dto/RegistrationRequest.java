@@ -1,5 +1,6 @@
 package com.keystone.dto;
 
+import com.keystone.entity.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -16,6 +17,8 @@ public class RegistrationRequest {
 
     @NotBlank(message = "Password is required")
     private String password;
+
+    private Role role;
 
     public String getUsername() {
         return username;
@@ -39,5 +42,13 @@ public class RegistrationRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

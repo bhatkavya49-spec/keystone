@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "../../components/ui/Modal";
 import Notice from "../../components/ui/Notice";
+import { apiFetch } from "../../api/client";
 import { toLocalInputValue } from "../../utils/format";
 
 const PRIORITIES = ["LOW", "MEDIUM", "HIGH", "URGENT"];
@@ -32,6 +33,16 @@ export default function WorkOrderFormModal({ open, workOrder, customers, sites, 
     };
   });
   const [error, setError] = useState("");
+  const [technicians, setTechnicians] = useState([]);
+  const [techniciansLoading, setTechniciansLoading] = useState(false);
+
+  useEffect(() => {
+    setTechniciansLoading(true);
+    apiFetch("/api/auth/technicians")
+      .then((data) => setTechnicians(data || []))
+      .catch(() => setTechnicians([]))
+      .finally(() => setTechniciansLoading(false));
+  }, []);
 
   const customerSites = useMemo(() => {
     if (!form.customerId) return [];
@@ -181,18 +192,23 @@ export default function WorkOrderFormModal({ open, workOrder, customers, sites, 
 
           <div className="form-group">
             <label className="form-label" htmlFor="wo-technician">
-              Technician ID
-              <span className="form-hint">Optional — numeric user id of the assigned technician</span>
+              Technician
+              <span className="form-hint">Optional — leave unassigned to dispatch later</span>
             </label>
-            <input
+            <select
               id="wo-technician"
-              className="form-input"
-              type="number"
-              min="1"
+              className="form-select"
               value={form.technicianId}
               onChange={(e) => setField("technicianId", e.target.value)}
-              placeholder={workOrder?.assignedTechnician ? `Currently ${workOrder.assignedTechnician.username}` : "Leave blank for unassigned"}
-            />
+              disabled={techniciansLoading}
+            >
+              <option value="">Unassigned</option>
+              {technicians.map((tech) => (
+                <option key={tech.id} value={tech.id}>
+                  {tech.username}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

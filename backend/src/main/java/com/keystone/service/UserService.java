@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
 public class UserService {
 
@@ -54,7 +56,7 @@ public class UserService {
         user.setUsername(request.getUsername());
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.CUSTOMER);
+        user.setRole(request.getRole() != null ? request.getRole() : Role.CUSTOMER);
         User savedUser = userRepository.save(user);
 
         if (savedUser.getRole() == Role.CUSTOMER) {
@@ -95,6 +97,16 @@ public class UserService {
                 user.getRole(),
                 customer != null ? customer.getId() : null,
                 customer != null ? customer.getName() : null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<User> getTechnicians() {
+        return userRepository.findAllByRole(Role.TECHNICIAN);
+    }
+
+    @Transactional(readOnly = true)
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
     private String loginIdentifier(LoginRequest request) {

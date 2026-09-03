@@ -1095,6 +1095,10 @@
   }
 }
 
+.dashboard__section {
+  margin-top: 20px;
+}
+
 .recent-list {
   list-style: none;
   margin: 0;

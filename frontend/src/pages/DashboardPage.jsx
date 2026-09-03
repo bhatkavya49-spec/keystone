@@ -15,6 +15,7 @@ import DataTable from "../components/ui/DataTable";
 import Icon from "../components/Icon";
 import NewServiceRequestModal from "./customer/NewServiceRequestModal";
 import CustomerRequestDetailModal from "./customer/CustomerRequestDetailModal";
+import TeamManagement from "../components/team/TeamManagement";
 
 const ROLE_MESSAGES = {
   MANAGER: "Oversee customers, sites, work orders, and service level agreements across the organization.",
@@ -603,6 +604,12 @@ function TeamDashboard() {
           </div>
         </section>
       </div>
+
+      {user?.role === "MANAGER" && (
+        <div className="dashboard__section">
+          <TeamManagement />
+        </div>
+      )}
     </div>
   );
 }
