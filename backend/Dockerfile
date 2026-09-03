@@ -3,7 +3,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 RUN mvn clean package -DskipTests && \
-    cp target/*-SNAPSHOT.jar app.jar || cp target/*.jar app.jar
+    find target -maxdepth 1 -name "*.jar" ! -name "*-plain.jar" -exec cp {} app.jar \;
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
