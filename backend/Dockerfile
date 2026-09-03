@@ -6,6 +6,7 @@ RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+# Remove plain jar to prevent copying non-executable jar
+COPY --from=build /app/target/*[!n].jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-Dserver.port=${PORT}", "-jar", "app.jar"]
